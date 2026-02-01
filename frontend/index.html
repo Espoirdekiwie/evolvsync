@@ -1,0 +1,955 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EvolvSync - Voice-Powered Growth Tracking</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #2D3561;
+            --secondary: #C05746;
+            --accent: #E8B4B8;
+            --bg-light: #FAF8F3;
+            --success: #4A8B6F;
+            --warning: #D4A373;
+            --gradient-warm: linear-gradient(135deg, #C05746 0%, #E8B4B8 100%);
+            --gradient-cool: linear-gradient(135deg, #2D3561 0%, #5B7C99 100%);
+            --shadow: 0 20px 60px rgba(45, 53, 97, 0.15);
+        }
+
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background: var(--bg-light);
+            color: #1F1F1F;
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        .bg-animation {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            opacity: 0.4;
+        }
+
+        .bg-circle {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(80px);
+            animation: float 20s infinite ease-in-out;
+        }
+
+        .bg-circle:nth-child(1) {
+            width: 400px;
+            height: 400px;
+            background: var(--accent);
+            top: -100px;
+            right: -100px;
+        }
+
+        .bg-circle:nth-child(2) {
+            width: 300px;
+            height: 300px;
+            background: var(--secondary);
+            bottom: -50px;
+            left: -50px;
+            animation-delay: 5s;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            50% { transform: translate(30px, -30px) scale(1.05); }
+        }
+
+        nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 2rem 5%;
+            background: rgba(250, 248, 243, 0.95);
+            backdrop-filter: blur(10px);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            box-shadow: 0 2px 20px rgba(0,0,0,0.05);
+        }
+
+        .logo {
+            font-family: 'Playfair Display', serif;
+            font-size: 2rem;
+            font-weight: 900;
+            background: var(--gradient-cool);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .nav-cta {
+            background: var(--gradient-warm);
+            color: white;
+            padding: 0.8rem 2rem;
+            border-radius: 50px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 10px 30px rgba(192, 87, 70, 0.3);
+        }
+
+        .nav-cta:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 15px 40px rgba(192, 87, 70, 0.4);
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 5%;
+        }
+
+        .app-container {
+            display: none;
+        }
+
+        .app-container.active {
+            display: block;
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Voice Recorder Styles */
+        .voice-recorder {
+            background: var(--gradient-cool);
+            color: white;
+            padding: 3rem;
+            border-radius: 30px;
+            text-align: center;
+            margin-bottom: 2rem;
+            box-shadow: var(--shadow);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .voice-recorder.recording {
+            background: var(--gradient-warm);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.02); }
+        }
+
+        .mic-button {
+            background: white;
+            color: var(--primary);
+            border: none;
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            font-size: 3rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1.5rem;
+        }
+
+        .mic-button:hover {
+            transform: scale(1.1);
+            box-shadow: 0 15px 50px rgba(0,0,0,0.3);
+        }
+
+        .mic-button.recording {
+            background: #ff4444;
+            color: white;
+            animation: recordPulse 1s infinite;
+        }
+
+        @keyframes recordPulse {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(255, 68, 68, 0.7); }
+            50% { box-shadow: 0 0 0 20px rgba(255, 68, 68, 0); }
+        }
+
+        .voice-status {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+        }
+
+        .voice-transcript {
+            background: rgba(255,255,255,0.2);
+            padding: 1.5rem;
+            border-radius: 15px;
+            min-height: 100px;
+            margin-top: 1.5rem;
+            text-align: left;
+            backdrop-filter: blur(10px);
+        }
+
+        .voice-controls {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            margin-top: 1.5rem;
+        }
+
+        .voice-controls button {
+            padding: 0.8rem 2rem;
+            border: 2px solid white;
+            background: transparent;
+            color: white;
+            border-radius: 50px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .voice-controls button:hover {
+            background: white;
+            color: var(--primary);
+        }
+
+        /* Stats and UI Elements */
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: 100px;
+            width: 280px;
+            height: calc(100vh - 100px);
+            background: white;
+            padding: 2rem;
+            border-radius: 0 30px 30px 0;
+            box-shadow: var(--shadow);
+        }
+
+        .sidebar-menu {
+            list-style: none;
+        }
+
+        .sidebar-menu li {
+            margin-bottom: 1rem;
+        }
+
+        .sidebar-menu a {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem;
+            border-radius: 15px;
+            text-decoration: none;
+            color: #1F1F1F;
+            transition: all 0.3s ease;
+        }
+
+        .sidebar-menu a:hover,
+        .sidebar-menu a.active {
+            background: var(--gradient-warm);
+            color: white;
+            transform: translateX(5px);
+        }
+
+        .main-content {
+            margin-left: 320px;
+            padding: 2rem;
+        }
+
+        .page {
+            display: none;
+        }
+
+        .page.active {
+            display: block;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 2rem;
+            border-radius: 20px;
+            box-shadow: var(--shadow);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: var(--gradient-warm);
+        }
+
+        .stat-card h3 {
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-card .value {
+            font-family: 'Playfair Display', serif;
+            font-size: 3rem;
+            font-weight: 900;
+            color: var(--secondary);
+        }
+
+        .entry-card {
+            background: white;
+            padding: 2rem;
+            border-radius: 20px;
+            box-shadow: var(--shadow);
+            margin-bottom: 2rem;
+            border-left: 4px solid var(--secondary);
+            transition: all 0.3s ease;
+        }
+
+        .entry-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 25px 70px rgba(45, 53, 97, 0.2);
+        }
+
+        .entry-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .entry-category {
+            background: var(--gradient-cool);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        .voice-badge {
+            background: var(--gradient-warm);
+            color: white;
+            padding: 0.3rem 0.8rem;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3rem;
+        }
+
+        .btn {
+            padding: 1rem 2rem;
+            border: none;
+            border-radius: 50px;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: 'DM Sans', sans-serif;
+        }
+
+        .btn-primary {
+            background: var(--gradient-warm);
+            color: white;
+            width: 100%;
+            box-shadow: 0 10px 30px rgba(192, 87, 70, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 15px 40px rgba(192, 87, 70, 0.4);
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: var(--primary);
+        }
+
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 1rem;
+            border: 2px solid var(--accent);
+            border-radius: 15px;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 1rem;
+        }
+
+        .form-group textarea {
+            min-height: 150px;
+        }
+
+        .dashboard-header h1 {
+            font-family: 'Playfair Display', serif;
+            font-size: 3rem;
+            text-align: center;
+            margin-bottom: 1rem;
+            background: var(--gradient-cool);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .dashboard-header p {
+            text-align: center;
+            font-size: 1.2rem;
+            color: var(--secondary);
+            margin-bottom: 3rem;
+        }
+
+        /* Auth Styles */
+        .auth-section {
+            min-height: calc(100vh - 100px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 4rem 0;
+        }
+
+        .auth-container {
+            background: white;
+            border-radius: 30px;
+            box-shadow: var(--shadow);
+            padding: 3rem;
+            max-width: 500px;
+            width: 100%;
+        }
+
+        .auth-container h2 {
+            font-family: 'Playfair Display', serif;
+            font-size: 2.5rem;
+            text-align: center;
+            margin-bottom: 2rem;
+            background: var(--gradient-cool);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .auth-form input {
+            width: 100%;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            border: 2px solid var(--accent);
+            border-radius: 15px;
+            font-size: 1rem;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .tab {
+            flex: 1;
+            padding: 1rem;
+            background: transparent;
+            border: 2px solid var(--accent);
+            border-radius: 15px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .tab.active {
+            background: var(--gradient-warm);
+            color: white;
+            border-color: transparent;
+        }
+
+        /* Responsive */
+        @media (max-width: 968px) {
+            .sidebar {
+                display: none;
+            }
+            .main-content {
+                margin-left: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-animation">
+        <div class="bg-circle"></div>
+        <div class="bg-circle"></div>
+    </div>
+
+    <nav>
+        <div class="logo">🌱 EvolvSync</div>
+        <a href="#" class="nav-cta" id="getStartedBtn">Get Started</a>
+    </nav>
+
+    <!-- Auth Section -->
+    <div class="auth-section" id="authSection">
+        <div class="container">
+            <div class="auth-container">
+                <h2>🎙️ Voice-Powered Growth</h2>
+                <p style="text-align: center; color: #666; margin-bottom: 2rem;">
+                    Speak your thoughts. We'll handle the rest.
+                </p>
+
+                <div class="tabs">
+                    <button class="tab active" onclick="switchTab('login')">Login</button>
+                    <button class="tab" onclick="switchTab('register')">Register</button>
+                </div>
+
+                <form id="loginForm" class="auth-form">
+                    <input type="text" id="loginUsername" placeholder="Username" required>
+                    <input type="password" id="loginPassword" placeholder="Password" required>
+                    <button type="submit" class="btn btn-primary">Login</button>
+                </form>
+
+                <form id="registerForm" class="auth-form" style="display: none;">
+                    <input type="text" id="regUsername" placeholder="Username" required>
+                    <input type="password" id="regPassword" placeholder="Password" required>
+                    <input type="password" id="regConfirm" placeholder="Confirm Password" required>
+                    <button type="submit" class="btn btn-primary">Create Account</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Dashboard -->
+    <div class="app-container" id="appContainer">
+        <div class="sidebar">
+            <ul class="sidebar-menu">
+                <li><a href="#" class="menu-link active" data-page="overview">📊 Dashboard</a></li>
+                <li><a href="#" class="menu-link" data-page="voice-entry">🎙️ Voice Entry</a></li>
+                <li><a href="#" class="menu-link" data-page="journal">📖 My Journal</a></li>
+                <li><a href="#" class="menu-link" data-page="analytics">📈 Analytics</a></li>
+            </ul>
+            <button class="btn btn-primary" onclick="logout()" style="margin-top: 2rem;">Logout</button>
+        </div>
+
+        <div class="main-content">
+            <!-- Overview Page -->
+            <div class="page active" id="overview">
+                <div class="dashboard-header">
+                    <h1>Welcome, <span id="usernameDisplay"></span>! 👋</h1>
+                    <p>🎙️ Speak your truth. Track your growth.</p>
+                </div>
+
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <h3>Total Entries</h3>
+                        <div class="value" id="totalEntries">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Voice Entries</h3>
+                        <div class="value" id="voiceEntries">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Current Streak</h3>
+                        <div class="value" id="currentStreak">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Words Spoken</h3>
+                        <div class="value" id="totalWords">0</div>
+                    </div>
+                </div>
+
+                <div id="recentEntries"></div>
+            </div>
+
+            <!-- Voice Entry Page -->
+            <div class="page" id="voice-entry">
+                <div class="dashboard-header">
+                    <h1>🎙️ Voice Journaling</h1>
+                    <p>Speak naturally. We'll capture your thoughts.</p>
+                </div>
+
+                <div class="voice-recorder" id="voiceRecorder">
+                    <button class="mic-button" id="micButton" onclick="toggleRecording()">
+                        🎤
+                    </button>
+                    <div class="voice-status" id="voiceStatus">
+                        Tap the microphone to start recording
+                    </div>
+                    <div class="voice-transcript" id="voiceTranscript">
+                        Your words will appear here as you speak...
+                    </div>
+                    <div class="voice-controls" id="voiceControls" style="display: none;">
+                        <button onclick="clearTranscript()">Clear</button>
+                        <button onclick="saveVoiceEntry()">Save Entry</button>
+                    </div>
+                </div>
+
+                <form id="voiceEntryForm">
+                    <div class="form-group">
+                        <label>Category</label>
+                        <select id="voiceCategory" required>
+                            <option value="">Select category...</option>
+                            <option value="Personal Development">Personal Development</option>
+                            <option value="Emotional Wellbeing">Emotional Wellbeing</option>
+                            <option value="Career & Skills">Career & Skills</option>
+                            <option value="Relationships">Relationships</option>
+                            <option value="Health & Fitness">Health & Fitness</option>
+                            <option value="Creativity">Creativity</option>
+                            <option value="General Reflection">General Reflection</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Edit Transcript (Optional)</label>
+                        <textarea id="editTranscript" placeholder="Edit your transcribed text here..."></textarea>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Journal Page -->
+            <div class="page" id="journal">
+                <div class="dashboard-header">
+                    <h1>📖 My Journal</h1>
+                    <p>Your complete growth journey</p>
+                </div>
+                <div id="journalEntries"></div>
+            </div>
+
+            <!-- Analytics Page -->
+            <div class="page" id="analytics">
+                <div class="dashboard-header">
+                    <h1>📈 Growth Analytics</h1>
+                    <p>Visualize your evolution</p>
+                </div>
+                <div id="analyticsContent"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Voice Recognition Setup
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        let recognition = null;
+        let isRecording = false;
+        let transcript = '';
+
+        if (SpeechRecognition) {
+            recognition = new SpeechRecognition();
+            recognition.continuous = true;
+            recognition.interimResults = true;
+            recognition.lang = 'en-US';
+
+            recognition.onresult = (event) => {
+                let interimTranscript = '';
+                let finalTranscript = '';
+
+                for (let i = event.resultIndex; i < event.results.length; i++) {
+                    const transcriptPiece = event.results[i][0].transcript;
+                    if (event.results[i].isFinal) {
+                        finalTranscript += transcriptPiece + ' ';
+                    } else {
+                        interimTranscript += transcriptPiece;
+                    }
+                }
+
+                transcript += finalTranscript;
+                document.getElementById('voiceTranscript').innerHTML = 
+                    transcript + '<span style="opacity: 0.5;">' + interimTranscript + '</span>';
+                document.getElementById('editTranscript').value = transcript;
+            };
+
+            recognition.onerror = (event) => {
+                console.error('Speech recognition error:', event.error);
+                if (event.error === 'no-speech') {
+                    document.getElementById('voiceStatus').textContent = 'No speech detected. Please try again.';
+                }
+            };
+
+            recognition.onend = () => {
+                if (isRecording) {
+                    recognition.start();
+                }
+            };
+        }
+
+        function toggleRecording() {
+            if (!recognition) {
+                alert('Speech recognition not supported in your browser. Please use Chrome or Edge.');
+                return;
+            }
+
+            isRecording = !isRecording;
+            const micButton = document.getElementById('micButton');
+            const voiceStatus = document.getElementById('voiceStatus');
+            const voiceRecorder = document.getElementById('voiceRecorder');
+            const voiceControls = document.getElementById('voiceControls');
+
+            if (isRecording) {
+                recognition.start();
+                micButton.classList.add('recording');
+                micButton.textContent = '⏹️';
+                voiceStatus.textContent = '🔴 Recording... Speak now!';
+                voiceRecorder.classList.add('recording');
+                voiceControls.style.display = 'flex';
+            } else {
+                recognition.stop();
+                micButton.classList.remove('recording');
+                micButton.textContent = '🎤';
+                voiceStatus.textContent = 'Recording stopped. Review or save your entry.';
+                voiceRecorder.classList.remove('recording');
+            }
+        }
+
+        function clearTranscript() {
+            transcript = '';
+            document.getElementById('voiceTranscript').textContent = 'Your words will appear here as you speak...';
+            document.getElementById('editTranscript').value = '';
+        }
+
+        function saveVoiceEntry() {
+            const category = document.getElementById('voiceCategory').value;
+            const text = document.getElementById('editTranscript').value || transcript;
+
+            if (!category) {
+                alert('Please select a category!');
+                return;
+            }
+
+            if (!text) {
+                alert('No text to save! Please record something first.');
+                return;
+            }
+
+            const entry = {
+                id: Date.now(),
+                timestamp: new Date().toISOString(),
+                category: category,
+                text: text,
+                entryType: 'voice',
+                sentiment: analyzeSentiment(text),
+                wordCount: text.split(' ').length
+            };
+
+            if (!users[currentUser]) {
+                users[currentUser] = { entries: [] };
+            }
+            users[currentUser].entries.push(entry);
+            localStorage.setItem('evolvsync_users', JSON.stringify(users));
+
+            alert('🎉 Voice entry saved successfully!');
+            clearTranscript();
+            loadDashboard();
+        }
+
+        // Data Storage
+        let currentUser = null;
+        let users = JSON.parse(localStorage.getItem('evolvsync_users')) || {};
+
+        // Auth Functions
+        function switchTab(tab) {
+            const tabs = document.querySelectorAll('.tab');
+            tabs.forEach(t => t.classList.remove('active'));
+            
+            if (tab === 'login') {
+                tabs[0].classList.add('active');
+                document.getElementById('loginForm').style.display = 'block';
+                document.getElementById('registerForm').style.display = 'none';
+            } else {
+                tabs[1].classList.add('active');
+                document.getElementById('loginForm').style.display = 'none';
+                document.getElementById('registerForm').style.display = 'block';
+            }
+        }
+
+        document.getElementById('loginForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const username = document.getElementById('loginUsername').value;
+            const password = document.getElementById('loginPassword').value;
+            
+            if (users[username]) {
+                currentUser = username;
+                showDashboard();
+            } else {
+                users[username] = { password: password, entries: [] };
+                localStorage.setItem('evolvsync_users', JSON.stringify(users));
+                currentUser = username;
+                showDashboard();
+            }
+        });
+
+        document.getElementById('registerForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const username = document.getElementById('regUsername').value;
+            const password = document.getElementById('regPassword').value;
+            const confirm = document.getElementById('regConfirm').value;
+            
+            if (password !== confirm) {
+                alert('Passwords do not match!');
+                return;
+            }
+            
+            users[username] = { password: password, entries: [] };
+            localStorage.setItem('evolvsync_users', JSON.stringify(users));
+            currentUser = username;
+            showDashboard();
+        });
+
+        function showDashboard() {
+            document.getElementById('authSection').style.display = 'none';
+            document.getElementById('appContainer').classList.add('active');
+            document.getElementById('usernameDisplay').textContent = currentUser;
+            loadDashboard();
+        }
+
+        function logout() {
+            currentUser = null;
+            document.getElementById('authSection').style.display = 'flex';
+            document.getElementById('appContainer').classList.remove('active');
+        }
+
+        // Navigation
+        document.querySelectorAll('.menu-link').forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                const page = this.dataset.page;
+                
+                document.querySelectorAll('.menu-link').forEach(l => l.classList.remove('active'));
+                this.classList.add('active');
+                
+                document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+                document.getElementById(page).classList.add('active');
+                
+                if (page === 'journal') loadJournal();
+                if (page === 'analytics') loadAnalytics();
+            });
+        });
+
+        function analyzeSentiment(text) {
+            const positiveWords = ['happy', 'great', 'excellent', 'amazing', 'wonderful', 'good'];
+            const negativeWords = ['sad', 'bad', 'terrible', 'stressed', 'anxious', 'difficult'];
+            
+            const textLower = text.toLowerCase();
+            const positiveCount = positiveWords.filter(word => textLower.includes(word)).length;
+            const negativeCount = negativeWords.filter(word => textLower.includes(word)).length;
+            
+            return positiveCount > negativeCount ? 'Positive' : 
+                   negativeCount > positiveCount ? 'Challenging' : 'Neutral';
+        }
+
+        function loadDashboard() {
+            const entries = users[currentUser]?.entries || [];
+            const voiceCount = entries.filter(e => e.entryType === 'voice').length;
+            const totalWords = entries.reduce((sum, e) => sum + (e.wordCount || 0), 0);
+            
+            document.getElementById('totalEntries').textContent = entries.length;
+            document.getElementById('voiceEntries').textContent = voiceCount;
+            document.getElementById('currentStreak').textContent = calculateStreak(entries);
+            document.getElementById('totalWords').textContent = totalWords;
+            
+            const recentContainer = document.getElementById('recentEntries');
+            recentContainer.innerHTML = '<h2 style="margin-bottom: 1.5rem;">Recent Entries</h2>';
+            
+            entries.slice(-3).reverse().forEach(entry => {
+                const card = document.createElement('div');
+                card.className = 'entry-card';
+                const date = new Date(entry.timestamp).toLocaleDateString('en-US', {
+                    month: 'long', day: 'numeric', year: 'numeric'
+                });
+                
+                card.innerHTML = `
+                    <div class="entry-header">
+                        <div class="entry-category">${entry.category}</div>
+                        ${entry.entryType === 'voice' ? '<div class="voice-badge">🎙️ Voice</div>' : ''}
+                    </div>
+                    <p>${entry.text.substring(0, 200)}...</p>
+                    <small>${date} • ${entry.sentiment}</small>
+                `;
+                recentContainer.appendChild(card);
+            });
+        }
+
+        function calculateStreak(entries) {
+            if (!entries.length) return 0;
+            const dates = [...new Set(entries.map(e => new Date(e.timestamp).toDateString()))].sort();
+            let streak = 1;
+            for (let i = dates.length - 2; i >= 0; i--) {
+                const current = new Date(dates[i]);
+                const next = new Date(dates[i + 1]);
+                if ((next - current) / (1000 * 60 * 60 * 24) === 1) streak++;
+                else break;
+            }
+            return streak;
+        }
+
+        function loadJournal() {
+            const entries = users[currentUser]?.entries || [];
+            const container = document.getElementById('journalEntries');
+            container.innerHTML = '';
+            
+            entries.slice().reverse().forEach(entry => {
+                const card = document.createElement('div');
+                card.className = 'entry-card';
+                const date = new Date(entry.timestamp).toLocaleString();
+                
+                card.innerHTML = `
+                    <div class="entry-header">
+                        <div class="entry-category">${entry.category}</div>
+                        ${entry.entryType === 'voice' ? '<div class="voice-badge">🎙️ Voice Entry</div>' : ''}
+                    </div>
+                    <p>${entry.text}</p>
+                    <small>${date} • ${entry.sentiment} • ${entry.wordCount || 0} words</small>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function loadAnalytics() {
+            const entries = users[currentUser]?.entries || [];
+            const container = document.getElementById('analyticsContent');
+            
+            const sentiments = entries.reduce((acc, e) => {
+                acc[e.sentiment] = (acc[e.sentiment] || 0) + 1;
+                return acc;
+            }, {});
+            
+            const voiceCount = entries.filter(e => e.entryType === 'voice').length;
+            const textCount = entries.length - voiceCount;
+            
+            container.innerHTML = `
+                <div class="stat-card">
+                    <h3>Sentiment Distribution</h3>
+                    <p>Positive: ${sentiments.Positive || 0} | Neutral: ${sentiments.Neutral || 0} | Challenging: ${sentiments.Challenging || 0}</p>
+                </div>
+                <div class="stat-card">
+                    <h3>Entry Types</h3>
+                    <p>🎙️ Voice: ${voiceCount} | ✍️ Text: ${textCount}</p>
+                </div>
+            `;
+        }
+
+        // Get Started button
+        document.getElementById('getStartedBtn').addEventListener('click', function(e) {
+            e.preventDefault();
+            document.getElementById('authSection').scrollIntoView({ behavior: 'smooth' });
+        });
+    </script>
+</body>
+</html>
